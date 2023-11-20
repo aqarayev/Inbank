@@ -1,0 +1,112 @@
+SELECT *
+
+FROM (
+SELECT
+ R.id AS receivable_id
+, R.contract_id
+, R.balance AS receivable_balance
+, R.amount AS receivable_amt
+, SUM(RI.amount) AS ri_amount
+, SUM(RI.balance) AS ri_balance
+, SUM(RIC.ric_amount) AS ric_amount
+
+FROM receivables AS R
+
+LEFT JOIN receivable_items AS RI 
+--here and further left join used, as we need to select cases, where there are records in "receivables" and no records in "receivable_items"
+	ON RI.receivable_id = R.id
+
+LEFT JOIN (
+SELECT
+ receivable_item_id
+, -SUM(amount) AS ric_amount
+
+FROM receivable_item_changes
+
+GROUP BY 1
+) AS RIC
+	ON RIC.receivable_item_id = RI.id
+
+--WHERE R.contract_id = 1469
+
+GROUP BY 1,2,3,4
+--here grouped by all these coulmns to be able to be able to show all of them 
+--if there was not required we can group by only first one of them and the result will remain the same, 
+--except we will not see contract_id, balance, and amount from "receivables" table
+) AS A
+
+WHERE COALESCE(receivable_amt,0) <> COALESCE(ri_amount,0)
+	OR COALESCE(receivable_amt,0) <> COALESCE(ric_amount,0) + COALESCE(receivable_balance,0)
+	OR COALESCE(ri_amount,0) <> COALESCE(ric_amount,0) + COALESCE(ri_balance,0)
+/*
+Here, we have 3 tables "receivables", "receivable_items", "receivable_item_changes". 
+In this query we are getting data about receivables that have abnormal data. --Namely, one of 3 different cases, as below:
+1. The ones where the number in "amount" column of "receivables" table is not equal to the sum of numbers in "amount" columns of "receivable_items" table with the same ID (also, cases where these columns are equal to NULL or cases where there is not any row with this ID in "receivable_items" table)
+2. The ones where the number in "amount" column of "receivables" table is not equal to the sum of numbers in "balance" columns of "receivables" table with the same ID minus sum of numbers in "amount" columns of "receivable_item_changes" table with the same ID (also, cases where these columns are equal to NULL or cases where there is not any row with this ID in "receivable_item_changes" table)
+3.The ones where the number in "amount" column of "receivable_items" table is not equal to the sum of numbers in "balance" columns of "receivable_items" table with the same ID minus sum of numbers in "amount" columns of "receivable_item_changes" table with the same ID (also, cases where these columns are equal to NULL or cases where there is not any row with this ID in "receivable_item_changes" table)
+*/
+
+Naming Conventions:
+
+Use meaningful and descriptive names for variables, methods, classes, and other identifiers.
+Follow the PascalCase convention for class names (MyClass), method names (MyMethod), and property names.
+Use camelCase for parameter names (myParameter) and local variables.
+
+Code Formatting:
+
+Use consistent and readable indentation (usually four spaces or a tab).
+Be consistent with your placement of braces. Common styles include placing the opening brace on the same line or on a new line.
+Maintain a consistent line length (commonly 80 or 120 characters per line).
+Consider using an automatic code formatter like Visual Studio's built-in formatter or external tools like ReSharper.
+
+Comments and Documentation:
+
+Write clear and concise comments to explain complex sections of code or to provide context.
+Use XML documentation comments for documenting public APIs, classes, methods, and properties.
+Keep comments up-to-date. Outdated comments can be more harmful than helpful.
+
+Error Handling:
+
+Use appropriate exception handling mechanisms rather than relying on error codes.
+Log exceptions and errors for troubleshooting but avoid exposing sensitive information.
+Be specific in catching exceptions, and avoid catching generic exceptions unless necessary.
+
+Code Organization:
+
+Keep related code together, and use regions sparingly.
+Organize your code into namespaces and folders logically.
+Avoid using too many static methods or classes unless they provide utility functions.
+
+Code Reusability:
+
+Follow the DRY (Don't Repeat Yourself) principle.
+Encapsulate reusable code in functions, methods, or classes.
+Use inheritance and interfaces for code reuse when appropriate.
+
+Performance Considerations:
+
+Be mindful of performance implications, especially in critical sections of code.
+Use appropriate data structures and algorithms.
+Consider lazy loading for expensive operations.
+
+Version Control:
+
+Use version control systems like Git.
+Commit regularly and provide meaningful commit messages.
+Understand and follow the branching strategy used in your project.
+
+Testing:
+
+Write unit tests for your code.
+Follow the Arrange-Act-Assert (AAA) pattern in your test methods.
+Run tests regularly and ensure they remain green.
+
+Security:
+
+Avoid using string concatenation to build SQL queries (use parameterized queries or an ORM).
+Validate input data to prevent security vulnerabilities like SQL injection.
+
+Consistent Style:
+
+Adhere to a consistent coding style throughout your project.
+If your team or organization has a coding style guide, follow it.
